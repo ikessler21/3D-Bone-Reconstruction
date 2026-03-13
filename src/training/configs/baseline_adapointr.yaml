@@ -1,0 +1,56 @@
+model: adapointr_baseline
+
+# AdaPoinTr baseline configuration
+# Replicates AdaPoinTr (Yu et al., T-PAMI 2023) adapted for fossil bones
+# with confidence-gated symmetry loss and discrete class conditioning
+
+adapointr:
+  num_query: 96
+  num_points: 4096
+  encoder_type: dgcnn
+  encoder_config:
+    k: 10
+    embed_dim: 384
+  transformer_config:
+    num_encoder_layers: 6
+    num_decoder_layers: 6
+    d_model: 384
+    n_head: 6
+    dim_feedforward: 1024
+    dropout: 0.0
+  # Bone-specific additions
+  use_symmetry: true
+  symmetry_threshold: 0.25
+  bone_type_embedding: true
+  n_bone_types: 32
+
+dataset: paleocomplete
+completeness_level: null
+n_points: 4096
+n_partial: 2048
+batch_size: 32
+seed: 42
+
+training:
+  lr: 1.0e-4
+  lr_min: 1.0e-6
+  weight_decay: 1.0e-4
+  epochs: 300       # AdaPoinTr uses more epochs
+  warmup_epochs: 10
+  mixed_precision: true
+  grad_accum_steps: 1
+  clip_grad_norm: 10.0
+  save_every: 10
+  top_k_checkpoints: 3
+  checkpoint_dir: checkpoints/baseline_adapointr
+  use_wandb: false
+  loss_weights:
+    cd_l1: 1.0
+    normal_con: 0.1
+    symmetry: 0.1
+  beta_max: 0.0     # no VAE in AdaPoinTr
+
+data:
+  paleocomplete_dir: data/paleocomplete
+  processed_dir: data/processed
+  num_workers: 4

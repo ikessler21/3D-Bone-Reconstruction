@@ -1,0 +1,88 @@
+# Fossil fine-tuning config (Stage 2 — VAE only).
+#
+# Fine-tunes HierarchicalVAE on Phenome10K fossil specimens.
+# Loads from a converged pretrain_bone checkpoint; diffusion and
+# conditioning modules remain frozen (same --mode pretrain).
+#
+# Run:
+#   python -m src.training.trainer \
+#     --config experiments/finetune_fossil.yaml --mode pretrain \
+#     --checkpoint checkpoints/pretrain_bone/best_epoch<N>_cd<X>.pth
+
+model: relic
+
+vae:
+  z_global_dim: 256
+  z_local_dim: 64
+  k_local: 128
+  n_points_out: 4096
+  d_model: 256
+  n_proxies: 256
+  k_local_enc: 16
+  n_proxy_layers: 2
+  n_global_layers: 4
+  use_symmetry: true
+  confidence_threshold: 0.25
+  n_ransac: 100
+
+diffusion:
+  type: ddpm
+  T: 100
+  ddim_steps: 20
+  t_emb_dim: 128
+  beta_start: 1.0e-4
+  beta_end: 0.02
+  guidance_scale: 3.0
+
+conditioning:
+  phylo_embedding: poincare
+  phylo_dim: 64
+  morpho_encoder: biobert
+  morpho_dim: 256
+  image_encoder: clip
+  image_dim: 256
+  out_dim: 256
+  n_taxa: 1024
+
+symmetry:
+  enabled: true
+  confidence_threshold: 0.25
+
+# Phenome10K fossil specimens only — avoids dilution with modern-bone distribution
+dataset: fossil
+n_points: 4096
+n_partial: 2048
+batch_size: 24           # ~1,400 Phenome10K specimens; no grad accumulation needed
+seed: 42
+
+training:
+  lr: 5.0e-5             # ~5× lower than pretrain: fine-tuning from converged checkpoint
+  lr_min: 1.0e-6
+  weight_decay: 1.0e-4
+  epochs: 50             # model already in good basin; half of pretrain
+  warmup_epochs: 2       # short warmup: already converged
+  mixed_precision: true
+  grad_accum_steps: 1    # effective batch = 24
+  clip_grad_norm: 1.0
+  save_every: 10
+  top_k_checkpoints: 3
+  checkpoint_dir: checkpoints/finetune_fossil
+  use_wandb: false
+  wandb_project: relic-fossil
+  run_name: finetune_fossil
+
+  loss_weights:
+    cd_l1: 1.0
+    normal_con: 0.1
+    symmetry: 0.15       # higher than pretrain: real fossils have genuine bilateral symmetry
+                         # confidence gate (< 0.25) protects asymmetric specimens
+    kl: 0.01
+    diffusion: 0.0       # diffusion frozen in pretrain mode
+    fidelity: 0.5
+
+  beta_max: 0.01
+  beta_warmup: 1500      # 50 epochs × ~58 steps ≈ 2,900 total; beta_max reached ~epoch 26
+
+data:
+  processed_dir: data/processed/phenome10k
+  num_workers: 4

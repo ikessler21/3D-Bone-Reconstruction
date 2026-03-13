@@ -1,0 +1,48 @@
+# Data — too large for git (use DVC or direct download scripts)
+data/raw/
+data/processed/
+data/paleocomplete/
+
+# Model checkpoints
+checkpoints/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Environment
+.env
+*.env.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs / outputs
+*.log
+wandb/
+runs/
+outputs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Claude Code project files
+.claude/
+
+# Misc repo artifacts
+=4.20
+feedback.db

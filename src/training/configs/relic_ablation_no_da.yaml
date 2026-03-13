@@ -1,0 +1,81 @@
+model: relic
+
+vae:
+  z_global_dim: 256
+  z_local_dim: 64
+  k_local: 128
+  n_points_out: 4096
+  d_model: 256
+  n_proxies: 256
+  k_local_enc: 16
+  n_proxy_layers: 2
+  n_global_layers: 4
+  use_symmetry: true
+  confidence_threshold: 0.25
+  n_ransac: 100
+
+diffusion:
+  type: ddpm
+  T: 100
+  ddim_steps: 20
+  t_emb_dim: 128
+  beta_start: 1.0e-4
+  beta_end: 0.02
+  guidance_scale: 3.0
+
+conditioning:
+  phylo_embedding: poincare
+  phylo_dim: 64
+  morpho_encoder: biobert
+  morpho_dim: 256
+  image_encoder: clip
+  image_dim: 256
+  out_dim: 256
+  n_taxa: 1024
+
+symmetry:
+  enabled: true
+  confidence_threshold: 0.25
+
+domain_adaptation:
+  enabled: false               # ABLATION: no domain adaptation phases 2 or 3
+
+# Note: CT augmentations (Phase 1) are also disabled in this ablation
+#       by setting ct_augmentation: false in the augmentation pipeline
+augmentation:
+  ct_augmentation: false       # ABLATION: disable CT artifact augmentation
+
+dataset: paleocomplete
+completeness_level: null
+n_points: 4096
+n_partial: 2048
+batch_size: 32
+seed: 42
+
+training:
+  lr: 1.0e-4
+  lr_min: 1.0e-6
+  weight_decay: 1.0e-4
+  epochs: 50
+  warmup_epochs: 5
+  mixed_precision: true
+  grad_accum_steps: 1
+  clip_grad_norm: 1.0
+  save_every: 5
+  top_k_checkpoints: 3
+  checkpoint_dir: checkpoints/ablation_no_da
+  use_wandb: false
+  loss_weights:
+    cd_l1: 1.0
+    normal_con: 0.1
+    symmetry: 0.1
+    kl: 0.01
+    diffusion: 1.0
+    fidelity: 0.5
+  beta_max: 0.01
+  beta_warmup: 5000
+
+data:
+  paleocomplete_dir: data/paleocomplete
+  processed_dir: data/processed
+  num_workers: 4
