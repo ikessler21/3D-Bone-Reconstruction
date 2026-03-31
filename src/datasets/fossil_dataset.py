@@ -154,6 +154,7 @@ class FossilDataset(Dataset):
         # Optional augmentation on partial cloud only
         if self.transform is not None:
             partial = self.transform(partial)
+            partial = _resample(partial, self.n_partial)  # re-normalize after aug (some transforms add/remove points)
 
         return {"partial": partial, "full": full, "metadata": meta}
 
